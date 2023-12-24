@@ -1,0 +1,251 @@
+[
+  {
+    "hidden": "False",
+    "name": "Volume Controller",
+    "rawName": "volume-controller",
+    "image": "sound.png",
+    "start-integration": "False",
+    "objects": [
+      "Increase Volume",
+      "Decrease Volume",
+      "Mute Volume"
+    ],
+    "objectsImages": [
+      "volume-up.png",
+      "volume-down.png",
+      "volume-mute.png"
+    ],
+    "itemsImages": [
+      "increase_blue.png",
+      "decrease_blue.png",
+      "mute_blue.png"
+    ],
+    "objectSettings": [
+      [
+        {
+          "name": "slider",
+          "settingsData": {
+            "name": "Volume percentage",
+            "width": "220",
+            "height": "20",
+            "max": "20",
+            "min": "1",
+            "starting": "5"
+          }
+        }
+      ],
+      [
+        {
+          "name": "slider",
+          "settingsData": {
+            "name": "Volume percentage",
+            "width": "220",
+            "height": "20",
+            "max": "20",
+            "min": "1",
+            "starting": "5"
+          }
+        }
+      ],
+      [
+        {
+          "name": ""
+        }
+      ]
+    ],
+    "functions": [
+      "increaseVol.marshal",
+      "decreaseVol.marshal",
+      "muteVol.marshal"
+    ]
+  },
+  {
+    "hidden": "False",
+    "name": "Hue Connection",
+    "rawName": "hue-connection",
+    "image": "light-bulb.png",
+    "start-integration": "False",
+    "objects": [
+      "Scenes",
+      "Turn on/off"
+    ],
+    "objectsImages": [
+      "light-bulb.png",
+      "light-bulb.png"
+    ],
+    "itemsImages": [
+      "two_lamps.png",
+      "switch_on_blue.png"
+    ],
+    "objectSettings": [
+      [
+        {
+          "name": "drop-menu",
+          "settingsData": {
+            "name": "user",
+            "width": "200",
+            "height": "20",
+            "options": [
+              "one",
+              "two",
+              "three"
+            ],
+            "func": "getBridges.marshal",
+            "funcOptionsRelative": "False",
+            "lastOptionProccess": "startFlask.py",
+            "lastOptionProccessStarted": "False"
+          }
+        },
+        {
+          "name": "drop-menu",
+          "settingsData": {
+            "name": "group",
+            "width": "200",
+            "height": "20",
+            "options": [],
+            "func": "getGroups.marshal",
+            "funcOptionsRelative": [
+              "user"
+            ],
+            "lastOptionProccess": "False",
+            "lastOptionProccessStarted": "False"
+          }
+        },
+        {
+          "name": "drop-menu",
+          "settingsData": {
+            "name": "scene",
+            "width": "200",
+            "height": "20",
+            "options": [],
+            "func": "getScenes.marshal",
+            "funcOptionsRelative": [
+              "user",
+              "group"
+            ],
+            "lastOptionProccess": "False",
+            "lastOptionProccessStarted": "False"
+          }
+        }
+      ],
+      [
+        {
+          "name": "drop-menu",
+          "settingsData": {
+            "name": "user",
+            "width": "200",
+            "height": "20",
+            "options": [
+              "one",
+              "two",
+              "three"
+            ],
+            "func": "getBridges.marshal",
+            "funcOptionsRelative": "False",
+            "lastOptionProccess": "startFlask.py",
+            "lastOptionProccessStarted": "False"
+          }
+        },
+        {
+          "name": "drop-menu",
+          "settingsData": {
+            "name": "group",
+            "width": "200",
+            "height": "20",
+            "options": [],
+            "func": "getGroups.marshal",
+            "funcOptionsRelative": [
+              "user"
+            ],
+            "lastOptionProccess": "False",
+            "lastOptionProccessStarted": "False"
+          }
+        },
+        {
+          "name": "second-image",
+          "settingsData": {
+            "name": "Off Status",
+            "defaultImage": "switch_off_blue.png",
+            "check-second": "check-on-off-image.marshal"
+          }
+        }
+        
+      ]
+    ],
+    "functions": [
+      "scenes.marshal",
+      "turn-on-off.marshal"
+    ]
+  },
+  {
+    "hidden": "False",
+    "name": "Discord Integration",
+    "rawName": "discord-integration",
+    "image": "light-bulb.png",
+    "start-integration": "startDiscord.marshal",
+    "objects": [
+      "Mute/Unmute",
+      "Deafen/Undeafen"
+    ],
+    "objectsImages": [
+      "light-bulb.png",
+      "light-bulb.png"
+    ],
+    "itemsImages": [
+      "mic_off_blue.png",
+      "mute_aqua.png"
+    ],
+    "objectSettings": [
+      [
+        {
+          "name": "drop-menu",
+          "settingsData": {
+            "name": "user",
+            "width": "200",
+            "height": "20",
+            "options": [],
+            "func": "getUsers.marshal",
+            "funcOptionsRelative": "False",
+            "lastOptionProccess": "startFlask.py",
+            "lastOptionProccessStarted": "False"
+          }
+        },
+        {
+          "name": "second-image",
+          "settingsData": {
+            "name": "Unmuted",
+            "defaultImage": "mic_on_blue.png",
+            "check-second": "check-muted-image.marshal"
+          }
+        }
+      ],
+      [
+        {
+          "name": "drop-menu",
+          "settingsData": {
+            "name": "user",
+            "width": "200",
+            "height": "20",
+            "options": [],
+            "func": "getUsers.marshal",
+            "funcOptionsRelative": "False",
+            "lastOptionProccess": "startFlask.py",
+            "lastOptionProccessStarted": "False"
+          }
+        },
+        {
+          "name": "second-image",
+          "settingsData": {
+            "name": "Undeafen",
+            "defaultImage": "volume_aqua.png",
+            "check-second": "check-deafen-image.marshal"
+          }
+        }
+      ]
+    ],
+    "functions": [
+      "mute-unmute.marshal",
+      "deafen-undeafen.marshal"
+    ]
+  }
+]
