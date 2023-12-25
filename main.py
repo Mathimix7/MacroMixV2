@@ -18,6 +18,8 @@ from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 from constants import *
 from serial.serialutil import SerialException
+import concurrent.futures
+import functools
 import pypresence
 import requests
 import ctypes
@@ -42,6 +44,9 @@ def app():
     numberOfBoxesLength = 3
     numberOfBoxesHeight = 2
     arrowImage = pygame.image.load(r"assets/assets/arrow.png")
+    refreshImage = pygame.image.load(r"assets/assets/refresh.png")
+    editImage = pygame.image.load(r"assets/assets/edit.png")
+    saveImage = pygame.image.load(r"assets/assets/save.png")
 
     phase = "devices" # This is used to know what to display/show
 
@@ -220,6 +225,7 @@ def app():
             self.menu_active = False
             self.active_option = -1
             self.clicked = False 
+            self.rotation_process = 360
 
         def updateOptions(self, options):
             self.options = options
@@ -263,6 +269,19 @@ def app():
         
         def value(self):
             return self.main
+        
+        def draw_refresh(self, surf):
+            x,y,w,h = self.rect
+            mpos = pygame.mouse.get_pos()
+            if self.rotation_process != 0:
+                self.rotation_process -= 30
+            rotated_image = pygame.transform.rotate(refreshImage, self.rotation_process)
+            new_rect = rotated_image.get_rect(center = rotated_image.get_rect(center = (x+w+15, y+h/2)).center)
+            rect = surf.blit(rotated_image, new_rect)
+            if rect.collidepoint(mpos) and pygame.mouse.get_pressed()[0] == 1:
+                self.rotation_process = 360
+                return True
+            return False
 
     class Slider:
         def __init__(self, display:str, fillColor:tuple, backgroundColor:tuple, outlineColor:tuple, position:int,font,startedWidth:int = 0,maxValue:int=100, minValue:int=20):
@@ -347,14 +366,14 @@ def app():
                     self.surface.blit(images[group["image"]], (35,y+25-images[group["image"]].get_height()/2))
                     self.buttonsCloseCategory.append(rect)
                     text = font.render(group["name"], True, (230, 230, 230))
-                    self.surface.blit(text, (58, y+25-text.get_height()/2+1))
+                    self.surface.blit(text, (58, y+29-text.get_height()/2))
                     oldY = y
                     pygame.draw.line(self.surface, (34,34,34), (0, y), (self.win.get_width(), y))
                     pygame.draw.line(self.surface, (34,34,34), (25, y), (25, y+50))
                     y += 50
                     if group["hidden"] == "False":
                         arrow = font.render("-", True, (230, 230, 230))
-                        self.surface.blit(arrow, (10, oldY+25-text.get_height()/2))
+                        self.surface.blit(arrow, (10, oldY+29-text.get_height()/2))
                         for item, image in zip(group["objects"], group["objectsImages"]):
                             pygame.draw.rect(self.surface, (34,34,34), pygame.Rect(0, y, self.surface.get_width(), y+40))
                             self.surface.blit(imagesGroup[image], (7,y+25-imagesGroup[image].get_height()/2-4))
@@ -366,7 +385,7 @@ def app():
                             y += 40
                     else:
                         arrow = font.render("+", True, (230, 230, 230))
-                        self.surface.blit(arrow, (8, oldY+25-text.get_height()/2+1))
+                        self.surface.blit(arrow, (8, oldY+29-text.get_height()/2+1))
                     pygame.draw.rect(self.surface, (41,41,41), pygame.Rect(0, y, self.surface.get_width(), self.surface.get_height()))
                     pygame.draw.line(self.surface, (34,34,34), (0, 0), (self.win.get_width(), 0))
                     pygame.draw.line(self.surface, (34,34,34), (0, oldY+50), (self.win.get_width(), oldY+50))
@@ -600,7 +619,6 @@ def app():
         
         def getPercent(self, percent):
             self.fill = self.barW / self.totalFill * percent
-            print(self.fill)
             return self.fill
 
         def draw(self, percent, estimatedTime):
@@ -713,6 +731,7 @@ def app():
         pygame.draw.line(win, (34,34,34), (win.get_width()-225, 0), (win.get_width()-225, win.get_height()))
         pygame.draw.line(win, (34,34,34), (0, win.get_height()-win.get_height()/3), (win.get_width()-225, win.get_height()-win.get_height()/3))
         saveButton = pygame.draw.rect(win, (59, 59, 59), (window.get_width()-225+145, 14, 71, 22), border_radius=2)
+        win.blit(saveImage, (window.get_width()-225+145, 14, 71, 22))
         return boxes, saveButton, rectGoBack
 
     def settings(win: pygame.Surface):
@@ -726,7 +745,8 @@ def app():
                 # Images are squares so we delete the extra border
                 pygame.draw.rect(win, BACKGROUND_COLOR, pygame.Rect(win.get_width()/3-140-4-110, win.get_height()-win.get_height()/3-4+50, 90+8, 90+8), 2, 15) 
                 pygame.draw.rect(win, BACKGROUND_COLOR, pygame.Rect(win.get_width()/3-140-5-110, win.get_height()-win.get_height()/3-5+50, 90+10, 90+10), 2, 15)
-                rect = pygame.draw.circle(win, (41,41,41), (win.get_width()/3-63-110, win.get_height()-win.get_height()/3-3+66), 10)
+                rect = pygame.draw.circle(win, (41,41,41), (win.get_width()/3-63-110, win.get_height()-win.get_height()/3-3+66), 12)
+                win.blit(editImage, (win.get_width()/3-63-110-7, win.get_height()-win.get_height()/3-3+66-8))
                 pos = pygame.mouse.get_pos()
                 if rect.collidepoint(pos):
                     if pygame.mouse.get_pressed()[0]:
@@ -785,7 +805,8 @@ def app():
                             font = pygame.font.Font(r"C:\Windows\Fonts\calibrib.ttf", 25)
                             text = font.render(data["name"], True, (230, 230, 230))
                             win.blit(text, (win.get_width()/3-140+45-text.get_width()/2, win.get_height()-win.get_height()/3+20))
-                            rect = pygame.draw.circle(win, (41,41,41), (win.get_width()/3-63, win.get_height()-win.get_height()/3-3+66), 10)
+                            rect = pygame.draw.circle(win, (41,41,41), (win.get_width()/3-63, win.get_height()-win.get_height()/3-3+66), 12)
+                            win.blit(editImage, (win.get_width()/3-63-7, win.get_height()-win.get_height()/3-3+66-8))
                             pos = pygame.mouse.get_pos()
                             if rect.collidepoint(pos):
                                 if pygame.mouse.get_pressed()[0]:
@@ -844,7 +865,7 @@ def app():
                                 options = checkForOptions()
                                 currentItemsSettingsOptions[selected][i] = options
                                 config[i] = DropDown([(59, 59, 59), (30, 30, 30)],[(59, 59, 59), (30, 30, 30)], 100, heightConfig, int(data["width"]), int(data["height"]), pygame.font.SysFont(None, 25), "None", options)
-                                widthConfig += int(data["width"]) + diferenceSpaceConfig
+                                widthConfig += int(data["width"]) + diferenceSpaceConfig + 25 # 25 pixels refresh button
                             else:
                                 try:
                                     if currentItemsSettingsNameValue[selected][data["name"]] != currentItemsSettings[selected][i].value():
@@ -862,13 +883,20 @@ def app():
                                 config[i] = currentItemsSettings[selected][i]
                                 currentItemsSettings[selected][i].updateOptions(options)
                                 currentItemsSettings[selected][i].rect[0], currentItemsSettings[selected][i].rect[1]  = widthConfig, heightConfig
-                                widthConfig += int(data["width"]) + diferenceSpaceConfig
+                                widthConfig += int(data["width"]) + diferenceSpaceConfig + 25 # 25 pixels refresh button
                                 currentItemsSettings[selected][i].draw(window)
                                 currentItemsSettings[selected][i].update()
+                                if currentItemsSettings[selected][i].draw_refresh(window):
+                                    currentItemsSettingsOptions[selected][i] = checkForOptions()
+                                    if currentItemsSettingsNameValue[selected][data["name"]] not in currentItemsSettingsOptions[selected][i]:
+                                        currentItemsSettings[selected][i].main = "None"
+                                    options = currentItemsSettingsOptions[selected][i]
                                 if data["lastOptionProccess"] != "False":
                                     if currentItemsSettings[selected][i].value() == options[-1]:
                                         if data["lastOptionProccessStarted"] == "False":
-                                            subprocess.Popen([os.path.join(sitePackagesPath, itemGroup["rawName"], data["lastOptionProccess"])], shell=True)
+                                            func = marshal_to_func(os.path.join(sitePackagesPath, itemGroup["rawName"], data["lastOptionProccess"]))
+                                            executor = concurrent.futures.ThreadPoolExecutor()
+                                            future = executor.submit(func)
                                             data["lastOptionProccessStarted"] = "True"
                                             currentItemsSettings[selected][i].main = "None"
                                     
@@ -993,7 +1021,7 @@ def app():
 
     selected = None
     scroll = Scroll(window, window.get_width()-225, max(calculateHeight(actionsList), window.get_height()), window.get_width(), scrollPower=50, colorBG=(41,41,41), initial_scroll=50)
-    manager = pygame_gui.UIManager((WIDTH, HEIGHT), os.path.join(os.getcwd(), 'theme.json'))
+    manager = pygame_gui.UIManager((WIDTH, HEIGHT), os.path.join(os.getcwd(), "assets", "themes", 'theme.json'))
     text_input = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect(((window.get_width()-225)+10, 14), (255-125, 22)), manager=manager, object_id='#main_text_entry', placeholder_text="Search")
     clock = pygame.time.Clock()
     rightClick = RightClickPopup(window)
