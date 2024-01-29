@@ -61,4 +61,4 @@ venv.bak/
 
 main.exe
 site-packages/**/*.py
-site-packages/*.json
+site-packages/**/*.json
