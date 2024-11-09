@@ -31,12 +31,12 @@ import sys
 logging.basicConfig(filename='app.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger('app')
 
-run = True
+run = False
 stoppedSuccesfully = False
 
 def app():
     global run, applicationRunning, stoppedSuccesfully
-    window = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE, pygame.NOFRAME)
+    window = pygame.display.set_mode((WIDTH, HEIGHT), flags=pygame.RESIZABLE|pygame.HIDDEN)
     pygame.display.set_caption(APP_NAME)
     pygame.display.set_icon(pygame.image.load(APP_ICON))
     pygame.init()
@@ -177,7 +177,7 @@ def app():
                             allTextInputConfig.append(config[x])
                             widthConfig += int(settingData["width"]) + diferenceSpaceConfig
                         elif setting["name"] == "slider":
-                            config[x] = Slider(window, (59, 59, 59), (150,150,150), (30,30,30), (widthConfig, heightConfig, int(settingData["width"]), int(settingData["height"])), pygame.font.SysFont(None, 25), maxValue=int(settingData["max"]), minValue=int(settingData["min"]), startedWidth=int(item["settings"][setting["settingsData"]["name"]]))
+                            config[x] = Slider((59, 59, 59), (150,150,150), (30,30,30), (widthConfig, heightConfig, int(settingData["width"]), int(settingData["height"])), pygame.font.SysFont(None, 25), maxValue=int(settingData["max"]), minValue=int(settingData["min"]), startedWidth=int(item["settings"][setting["settingsData"]["name"]]))
                             widthConfig += int(settingData["width"]) + diferenceSpaceConfig
                         elif setting["name"] == "drop-menu":
                             config[x] = DropDown([(59, 59, 59), (30, 30, 30)],[(59, 59, 59), (30, 30, 30)], 100, heightConfig, int(settingData["width"]), int(settingData["height"]), pygame.font.SysFont(None, 25), item["settings"][setting["settingsData"]["name"]], settingData["options"])
@@ -284,12 +284,11 @@ def app():
             return False
 
     class Slider:
-        def __init__(self, display:str, fillColor:tuple, backgroundColor:tuple, outlineColor:tuple, position:int,font,startedWidth:int = 0,maxValue:int=100, minValue:int=20):
+        def __init__(self, fillColor:tuple, backgroundColor:tuple, outlineColor:tuple, position:int,font,startedWidth:int = 0,maxValue:int=100, minValue:int=20):
             self.position = position[0], position[1]
             self.outlineSize = position[2], position[3]
             self.minValue = minValue
             self.upperValue = maxValue
-            self.display = display
             self.fillColor = fillColor
             self.backgroundColor = backgroundColor
             self.outlineColor = outlineColor
@@ -313,11 +312,11 @@ def app():
             else: self.finalradius = 0
             if self.sliderWidth <= 3: self.initialHeight, self.positionFix = self.outlineSize[1] - 6, self.position[1]+3
             else: self.initialHeight, self.positionFix = self.outlineSize[1], self.position[1]
-            pygame.draw.rect(self.display, self.fillColor, (self.position[0], self.position[1], self.outlineSize[0], self.outlineSize[1]), 0, 8)
-            pygame.draw.rect(self.display, self.backgroundColor, (self.position[0],self.positionFix, self.sliderWidth, self.initialHeight), 0, self.finalradius,8,self.finalradius,8)
-            pygame.draw.rect(self.display, self.outlineColor, (self.position[0]-2, self.position[1]-2, self.outlineSize[0]+4, self.outlineSize[1]+4), 2, 10, -1)
+            pygame.draw.rect(window, self.fillColor, (self.position[0], self.position[1], self.outlineSize[0], self.outlineSize[1]), 0, 8)
+            pygame.draw.rect(window, self.backgroundColor, (self.position[0],self.positionFix, self.sliderWidth, self.initialHeight), 0, self.finalradius,8,self.finalradius,8)
+            pygame.draw.rect(window, self.outlineColor, (self.position[0]-2, self.position[1]-2, self.outlineSize[0]+4, self.outlineSize[1]+4), 2, 10, -1)
             text = self.font.render(f"{self.value()}%", 1, self.backgroundColor)
-            self.display.blit(text, (self.position[0] + self.outlineSize[0] + 8, self.position[1]))
+            window.blit(text, (self.position[0] + self.outlineSize[0] + 8, self.position[1]))
         def changeValue(self):
             mousePos = pygame.mouse.get_pos()
             if mousePos[0] > self.position[0] and mousePos[0] < self.position[0]  + self.outlineSize[0]:
@@ -334,22 +333,21 @@ def app():
                     self.sliderWidth = self.outlineSize[0]
 
     class Scroll:
-        def __init__(self, win: pygame.Surface, width, height, x, scrollPower=15, colorBG=(0,0,0), initial_scroll=0):
+        def __init__(self, width, height, x, scrollPower=15, colorBG=(0,0,0), initial_scroll=0):
             self.surface = pygame.surface.Surface((x,height))
             self.colorBG = colorBG
             pygame.Surface.fill(self.surface, self.colorBG)
             self.width = width
-            self.height = win.get_height()-height
+            self.height = window.get_height()-height
             self.y = height
             self.x = x
-            self.win = win
             self.initial_scroll = initial_scroll
             self.scroll_y = self.initial_scroll
             self.scrollPower = scrollPower
             self.allItems = allItems(actionsList)
         
         def draw(self):
-            self.y = max(calculateHeight(actionsList)+self.initial_scroll, self.win.get_height())
+            self.y = max(calculateHeight(actionsList)+self.initial_scroll, window.get_height())
             y = 0
             pygame.Surface.fill(self.surface, self.colorBG)
             font = pygame.font.Font(r"C:\Windows\Fonts\calibrib.ttf", 20)
@@ -368,7 +366,7 @@ def app():
                     text = font.render(group["name"], True, (230, 230, 230))
                     self.surface.blit(text, (58, y+29-text.get_height()/2))
                     oldY = y
-                    pygame.draw.line(self.surface, (34,34,34), (0, y), (self.win.get_width(), y))
+                    pygame.draw.line(self.surface, (34,34,34), (0, y), (window.get_width(), y))
                     pygame.draw.line(self.surface, (34,34,34), (25, y), (25, y+50))
                     y += 50
                     if group["hidden"] == "False":
@@ -387,8 +385,8 @@ def app():
                         arrow = font.render("+", True, (230, 230, 230))
                         self.surface.blit(arrow, (8, oldY+29-text.get_height()/2+1))
                     pygame.draw.rect(self.surface, (41,41,41), pygame.Rect(0, y, self.surface.get_width(), self.surface.get_height()))
-                    pygame.draw.line(self.surface, (34,34,34), (0, 0), (self.win.get_width(), 0))
-                    pygame.draw.line(self.surface, (34,34,34), (0, oldY+50), (self.win.get_width(), oldY+50))
+                    pygame.draw.line(self.surface, (34,34,34), (0, 0), (window.get_width(), 0))
+                    pygame.draw.line(self.surface, (34,34,34), (0, oldY+50), (window.get_width(), oldY+50))
             else:
                 for group in actionsList: 
                     if text_input.text.lower() in group["name"].lower():
@@ -399,7 +397,7 @@ def app():
                         text = font.render(group["name"], True, (230, 230, 230))
                         self.surface.blit(text, (58, y+25-text.get_height()/2+1))
                         oldY = y
-                        pygame.draw.line(self.surface, (34,34,34), (0, y), (self.win.get_width(), y))
+                        pygame.draw.line(self.surface, (34,34,34), (0, y), (window.get_width(), y))
                         pygame.draw.line(self.surface, (34,34,34), (25, y), (25, y+50))
                         y += 50
                         if group["hidden"] == "False":
@@ -418,8 +416,8 @@ def app():
                             arrow = font.render("+", True, (230, 230, 230))
                             self.surface.blit(arrow, (8, oldY+25-text.get_height()/2+1))
                         pygame.draw.rect(self.surface, (41,41,41), pygame.Rect(0, y, self.surface.get_width(), self.surface.get_height()))
-                        pygame.draw.line(self.surface, (34,34,34), (0, 0), (self.win.get_width(), 0))
-                        pygame.draw.line(self.surface, (34,34,34), (0, oldY+50), (self.win.get_width(), oldY+50))
+                        pygame.draw.line(self.surface, (34,34,34), (0, 0), (window.get_width(), 0))
+                        pygame.draw.line(self.surface, (34,34,34), (0, oldY+50), (window.get_width(), oldY+50))
                         self.groupsAdded.append(group)
                 for group in actionsList:
                     added = False
@@ -437,7 +435,7 @@ def app():
                                     self.buttonsCloseCategory.append(rect)
                                     text = font.render(group["name"], True, (230, 230, 230))
                                     self.surface.blit(text, (58, y+25-text.get_height()/2+1))
-                                    pygame.draw.line(self.surface, (34,34,34), (0, y), (self.win.get_width(), y))
+                                    pygame.draw.line(self.surface, (34,34,34), (0, y), (window.get_width(), y))
                                     pygame.draw.line(self.surface, (34,34,34), (25, y), (25, y+50))
                                     oldY = y
                                     y += 50
@@ -449,8 +447,8 @@ def app():
                                         arrow = font.render("+", True, (230, 230, 230))
                                         self.surface.blit(arrow, (8, oldY+25-text.get_height()/2+1))
                                     pygame.draw.rect(self.surface, (41,41,41), pygame.Rect(0, y, self.surface.get_width(), self.surface.get_height()))
-                                    pygame.draw.line(self.surface, (34,34,34), (0, 0), (self.win.get_width(), 0))
-                                    pygame.draw.line(self.surface, (34,34,34), (0, oldY+50), (self.win.get_width(), oldY+50))
+                                    pygame.draw.line(self.surface, (34,34,34), (0, 0), (window.get_width(), 0))
+                                    pygame.draw.line(self.surface, (34,34,34), (0, oldY+50), (window.get_width(), oldY+50))
                                     self.groupsAdded.append(group)
                                 if group["hidden"] == "False":
                                     pygame.draw.rect(self.surface, (34,34,34), pygame.Rect(0, y, self.surface.get_width(), y+40))
@@ -462,7 +460,7 @@ def app():
                                     self.surface.blit(text2, (35, y+20-text2.get_height()/2))
                                     y += 40
                 pygame.draw.rect(self.surface, (41,41,41), pygame.Rect(0, y, self.surface.get_width(), self.surface.get_height()))
-            self.win.blit(self.surface, (self.width, self.scroll_y))
+            window.blit(self.surface, (self.width, self.scroll_y))
 
         def checkMouseClick(self, pos):
             for i, rect in enumerate(self.buttonsCloseCategory):
@@ -485,38 +483,37 @@ def app():
                         currentItemsGroup[selected] = groupNow
 
         def down(self):
-            if self.y > self.win.get_height():
+            if self.y > window.get_height():
                 self.scroll_y = min(self.scroll_y + self.scrollPower, self.initial_scroll)
             elif self.scroll_y != self.initial_scroll:
                 self.scroll_y = min(self.scroll_y + self.scrollPower, self.initial_scroll)
                 
         def up(self):
-            if self.y > self.win.get_height():
+            if self.y > window.get_height():
                 self.scroll_y = max(self.scroll_y - self.scrollPower, self.height)
             elif self.scroll_y != self.initial_scroll:
                 self.scroll_y = max(self.scroll_y - self.scrollPower, self.height)
 
         def resize(self, window: pygame.Surface):
-            self.win = window
+            window = window
             self.width = window.get_width()-225
-            self.x = self.win.get_width()
-            self.height = self.win.get_height()-self.y
-            if self.y > self.win.get_height():
+            self.x = window.get_width()
+            self.height = window.get_height()-self.y
+            if self.y > window.get_height():
                 self.scroll_y = max(self.scroll_y - self.scrollPower, self.height)
             else:
                 self.scroll_y = self.initial_scroll
 
     class ScrollImage:
-        def __init__(self, win: pygame.Surface, width, height, x, list,scrollPower=15, colorBG=(0,0,0), initial_scroll=0):
+        def __init__(self, width, height, x, list,scrollPower=15, colorBG=(0,0,0), initial_scroll=0):
             self.surface = pygame.surface.Surface((x,height))
             self.colorBG = colorBG
             self.images = list
             pygame.Surface.fill(self.surface, self.colorBG)
             self.width = width
-            self.height = win.get_height()-height
+            self.height = window.get_height()-height
             self.y = height
             self.x = x
-            self.win = win
             self.initial_scroll = initial_scroll
             self.scroll_y = self.initial_scroll
             self.scrollPower = scrollPower
@@ -524,7 +521,7 @@ def app():
         def draw(self):
             imageSize = 90
             space = 20
-            imagesPerLength = round(self.win.get_width() / (imageSize+space))
+            imagesPerLength = round(window.get_width() / (imageSize+space))
             imagesPerHeight = round(len(self.images) / imagesPerLength)
             times = 0
             margin = 10
@@ -532,41 +529,39 @@ def app():
             for i in range(imagesPerLength):
                 for x in range(imagesPerHeight):
                     if times < len(self.images):
-                        rect = self.surface.blit(self.images[times], (margin + imageSize*i+space*i, imageSize*x+space*x+self.win.get_height()/8-35))
-                        pygame.draw.rect(self.surface, (71,71,71), pygame.Rect(margin-3+imageSize*i+space*i, imageSize*x+space*x+self.win.get_height()/8-3-35, imageSize+6, imageSize+6), 4, 15)
-                        pygame.draw.rect(self.surface, self.colorBG, pygame.Rect(margin-4+imageSize*i+space*i, imageSize*x+space*x+self.win.get_height()/8-4-35, imageSize+8, imageSize+8), 2, 15) 
-                        pygame.draw.rect(self.surface, self.colorBG, pygame.Rect(margin-5+imageSize*i+space*i, imageSize*x+space*x+self.win.get_height()/8-5-35, imageSize+10, imageSize+10), 2, 15) 
+                        rect = self.surface.blit(self.images[times], (margin + imageSize*i+space*i, imageSize*x+space*x+window.get_height()/8-35))
+                        pygame.draw.rect(self.surface, (71,71,71), pygame.Rect(margin-3+imageSize*i+space*i, imageSize*x+space*x+window.get_height()/8-3-35, imageSize+6, imageSize+6), 4, 15)
+                        pygame.draw.rect(self.surface, self.colorBG, pygame.Rect(margin-4+imageSize*i+space*i, imageSize*x+space*x+window.get_height()/8-4-35, imageSize+8, imageSize+8), 2, 15) 
+                        pygame.draw.rect(self.surface, self.colorBG, pygame.Rect(margin-5+imageSize*i+space*i, imageSize*x+space*x+window.get_height()/8-5-35, imageSize+10, imageSize+10), 2, 15) 
                         times += 1
                         rect[0] += self.width
                         rect[1] += self.scroll_y
                         self.imagesRect.append(rect)
-            self.win.blit(self.surface, (self.width, self.scroll_y))
+            window.blit(self.surface, (self.width, self.scroll_y))
 
         def down(self):
-            if self.y > self.win.get_height():
+            if self.y > window.get_height():
                 self.scroll_y = min(self.scroll_y + self.scrollPower, self.initial_scroll)
             elif self.scroll_y != self.initial_scroll:
                 self.scroll_y = min(self.scroll_y + self.scrollPower, self.initial_scroll)
                 
         def up(self):
-            if self.y > self.win.get_height():
+            if self.y > window.get_height():
                 self.scroll_y = max(self.scroll_y - self.scrollPower, self.height)
             elif self.scroll_y != self.initial_scroll:
                 self.scroll_y = max(self.scroll_y - self.scrollPower, self.height)
 
         def resize(self, window: pygame.Surface):
-            self.win = window
             self.width = window.get_width()-225
-            self.x = self.win.get_width()
-            self.height = self.win.get_height()-self.y
-            if self.y > self.win.get_height():
+            self.x = window.get_width()
+            self.height = window.get_height()-self.y
+            if self.y > window.get_height():
                 self.scroll_y = max(self.scroll_y - self.scrollPower, self.height)
             else:
                 self.scroll_y = self.initial_scroll
 
     class RightClickPopup:
-        def __init__(self, win: pygame.Surface):
-            self.win = win
+        def __init__(self):
             self.active = False
         
         def draw(self):
@@ -575,17 +570,17 @@ def app():
             if self.active:
                 font = pygame.font.Font(r"C:\Windows\Fonts\calibrib.ttf", 17)
                 font2 = pygame.font.Font(r"C:\Windows\Fonts\calibrib.ttf", 20)
-                self.rect = pygame.draw.rect(self.win, (80,80,80), (self.x, self.y, self.width, self.height+20))
+                self.rect = pygame.draw.rect(window, (80,80,80), (self.x, self.y, self.width, self.height+20))
                 text = font2.render("Menu:", False, (220, 220, 220))
-                self.win.blit(text, (self.x+2, self.y+2))
+                window.blit(text, (self.x+2, self.y+2))
                 for option in self.options:
-                    rect = pygame.draw.rect(self.win, (80,80,80), (self.x, self.y+y, self.width, 20))
+                    rect = pygame.draw.rect(window, (80,80,80), (self.x, self.y+y, self.width, 20))
                     self.objectsRects.append(rect) 
                     text = font.render(option, False, (220, 220, 220))
-                    self.win.blit(text, (self.x+3, self.y+y+3))
+                    window.blit(text, (self.x+3, self.y+y+3))
                     y += 20
-                pygame.draw.line(self.win, (50,50,50), (self.x, self.y+20), (self.x+self.width-1, self.y+20))
-                pygame.draw.rect(self.win, (50,50,50), pygame.Rect(self.x, self.y, self.width, self.height+20), 1)
+                pygame.draw.line(window, (50,50,50), (self.x, self.y+20), (self.x+self.width-1, self.y+20))
+                pygame.draw.rect(window, (50,50,50), pygame.Rect(self.x, self.y, self.width, self.height+20), 1)
 
         def updateActive(self, pos, options):
             self.x = pos[0]
@@ -602,8 +597,7 @@ def app():
             self.active = False
 
     class Loadbar:
-        def __init__(self, win: pygame.Surface, bgx, bgy, bgw, bgh, bgcolor, barx, bary, barw, barh, barcolor, maxFill=100, fill=0):
-            self.win = win
+        def __init__(self, bgx, bgy, bgw, bgh, bgcolor, barx, bary, barw, barh, barcolor, maxFill=100, fill=0):
             self.bgX = bgx
             self.bgY = bgy
             self.bgW = bgw
@@ -622,14 +616,14 @@ def app():
             return self.fill
 
         def draw(self, percent, estimatedTime):
-            pygame.draw.rect(self.win, self.bgColor, (self.bgX, self.bgY, self.bgW, self.bgH))
-            pygame.draw.rect(self.win, self.barColor, (self.barX-1, self.barY-1, self.barW+2, self.barH+2), 2)
-            pygame.draw.rect(self.win, self.barColor, (self.barX, self.barY, self.getPercent(percent), self.barH))
+            pygame.draw.rect(window, self.bgColor, (self.bgX, self.bgY, self.bgW, self.bgH))
+            pygame.draw.rect(window, self.barColor, (self.barX-1, self.barY-1, self.barW+2, self.barH+2), 2)
+            pygame.draw.rect(window, self.barColor, (self.barX, self.barY, self.getPercent(percent), self.barH))
             font = pygame.font.Font(r"C:\Windows\Fonts\calibrib.ttf", 20)
             text = font.render(str(percent)+"%", True, (230, 230, 230))
             text2 = font.render(str(estimatedTime), True, (230, 230, 230))
-            self.win.blit(text, (self.barX+self.barW+text.get_width()/2-5, self.barY+text.get_height()/2-5))
-            self.win.blit(text2, (self.barX+self.barW/2-text2.get_width()/2, self.barY-text2.get_height()))
+            window.blit(text, (self.barX+self.barW+text.get_width()/2-5, self.barY+text.get_height()/2-5))
+            window.blit(text2, (self.barX+self.barW/2-text2.get_width()/2, self.barY-text2.get_height()))
 
     def changeIcon(win: pygame.Surface, selected):
         width = win.get_width()
@@ -652,7 +646,7 @@ def app():
                 image.save(os.path.join(pathIconsImages, "current-image.png"))
                 imagesIcons.append(pygame.image.load(os.path.join(pathIconsImages, "current-image.png")).convert_alpha())
                 imagesName.append(item)
-        imageScroll = ScrollImage(window, 0, getHeightImage(imagesIcons), window.get_width(), imagesIcons, scrollPower=50, colorBG=(41,41,41))
+        imageScroll = ScrollImage(0, getHeightImage(imagesIcons), window.get_width(), imagesIcons, scrollPower=50, colorBG=(41,41,41))
         choosingImage = True
         imageSelected = None
         imagePath = None
@@ -905,7 +899,7 @@ def app():
                         elif setting["name"] == "slider":
                             data = setting["settingsData"]
                             if not configCreated:
-                                config[i] = Slider(window, (59, 59, 59), (150,150,150), (30,30,30), (widthConfig, heightConfig, int(data["width"]), int(data["height"])), pygame.font.SysFont(None, 25), maxValue=int(data["max"]), minValue=int(data["min"]), startedWidth=int(data["starting"]))
+                                config[i] = Slider((59, 59, 59), (150,150,150), (30,30,30), (widthConfig, heightConfig, int(data["width"]), int(data["height"])), pygame.font.SysFont(None, 25), maxValue=int(data["max"]), minValue=int(data["min"]), startedWidth=int(data["starting"]))
                                 widthConfig += int(data["width"]) + diferenceSpaceConfig
                             else:
                                 config[i] = currentItemsSettings[selected][i]
@@ -976,7 +970,7 @@ def app():
             else: 
                 estimatedTime = "Remaining: " + estimatedTime
             events = pygame.event.get() # Listen for events so the window "revives"
-            loadbar = Loadbar(window, window.get_width()/2-300/2, window.get_height()/2-175/2, 300, 175, (40,40,40), window.get_width()/2-150/2, window.get_height()/2-30/2, 150, 30, (255,255,255), 100)
+            loadbar = Loadbar(window.get_width()/2-300/2, window.get_height()/2-175/2, 300, 175, (40,40,40), window.get_width()/2-150/2, window.get_height()/2-30/2, 150, 30, (255,255,255), 100)
             loadbar.draw(round(percent), estimatedTime)
             pygame.display.update()
 
@@ -1020,11 +1014,11 @@ def app():
         serialConnection.restart()
 
     selected = None
-    scroll = Scroll(window, window.get_width()-225, max(calculateHeight(actionsList), window.get_height()), window.get_width(), scrollPower=50, colorBG=(41,41,41), initial_scroll=50)
+    scroll = Scroll(window.get_width()-225, max(calculateHeight(actionsList), window.get_height()), window.get_width(), scrollPower=50, colorBG=(41,41,41), initial_scroll=50)
     manager = pygame_gui.UIManager((WIDTH, HEIGHT), os.path.join(os.getcwd(), "assets", "themes", 'theme.json'))
     text_input = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect(((window.get_width()-225)+10, 14), (255-125, 22)), manager=manager, object_id='#main_text_entry', placeholder_text="Search")
     clock = pygame.time.Clock()
-    rightClick = RightClickPopup(window)
+    rightClick = RightClickPopup()
     selectedDevice = 0
     oldRun = False
     serialConnection.start()
@@ -1034,7 +1028,8 @@ def app():
             if run:
                 window = pygame.display.set_mode((width, height), flags=pygame.SHOWN|pygame.RESIZABLE)
             else:
-                window = pygame.display.set_mode((width, height), flags=pygame.HIDDEN|pygame.RESIZABLE)
+                # window = pygame.display.set_mode((width, height), flags=pygame.HIDDEN|pygame.RESIZABLE)
+                pygame.display.quit()
         oldRun = run
         if run:
             from serialConnection import devices, devicesIdentifier
